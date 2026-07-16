@@ -1,0 +1,13 @@
+## Things to add in the app
+
+
+
+- <span style="color:gray">~~Drag-and-drop folder support.~~</span>
+- Checkboxes for categories to organize.
+- "Dry Run" mode (preview without moving files).
+- Progress bar.
+- Undo last organization.
+- Light/Dark mode.
+- Save settings in a JSON config file.
+- Package it as a Windows .exe.
+

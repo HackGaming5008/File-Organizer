@@ -1,7 +1,6 @@
 
 ####################### IMPORTS ##################
 
-import os 
 import shutil
 import pathlib
 from pathlib import Path
@@ -22,7 +21,7 @@ docx_ext = [".docx", ".doc", ".xlsx", ".pptx"]
 
 # Modes
 delete_empty_folders = False
-move_enabled = False
+move_enabled = True
 
 #################### FUNCTIONS ###################
 
@@ -30,17 +29,17 @@ move_enabled = False
 def move_files(src, dist, files):
     if files:
         for file in files:
-            shutil.move(os.path.join(src, file), os.path.join(dist, file))
+            src_file = src / file
+            dist_file = dist / file
+            shutil.move(src_file, dist_file)
             print(f"Moved {file}")
     else:
-        print(f"No files to move in {dist}")
+        print(f"No files to move in {dist_file.name}")
 
-def join_path(folder, file):
-    return os.path.join(folder, file)
 
 def delete_empty_folder(folder):
     try:
-        os.rmdir(folder)
+        folder.rmdir()
         print(f"Deleted empty folder: {folder.name}")
     except OSError:
         print(f"Could not delete folder: {folder.name} (not empty)")
@@ -61,44 +60,42 @@ def functionMain(folder_path):
         "Documents": [[], []]
     }
 
-    with os.scandir(folder_path) as entries:
-        for entry in entries:
-            if entry.is_file():
+    for entry in folder_path.iterdir():
+        if entry.is_file():
 
-                ext = os.path.splitext(entry.name)[1].lower()
+            ext = entry.suffix.lower()
+            found = False
 
-                found = False
+            for catagory, (files, extensions) in catagories.items():
+                # print(ext)
+                if ext in extensions:
+                    files.append(entry.name)
+                    found = True
+                    break
 
-                for catagory, (files, extensions) in catagories.items():
-                    # print(ext)
-                    if ext in extensions:
-                        files.append(entry.name)
-                        found = True
-                        break
-
-                if not found:
-                    catagories["Documents"][0].append(entry.name)
+            if not found:
+                catagories["Documents"][0].append(entry.name)
 
     if delete_empty_folders:
         folders = [p for p in folder_path.iterdir() if p.is_dir()]
         for folder in folders:
-            with os.scandir(folder) as entries:
-                entries = list(entries)
-                if not entries:
-                    delete_empty_folder(folder)
+            is_empty = not any(folder.iterdir())
+            if is_empty:
+                delete_empty_folder(folder)
 
 
 
 
     for catagory, (files, extensions) in catagories.items():
-        if move_files:
+        if move_enabled:
             if files:
+                target_folder = folder_path / catagory
                 try:
-                    os.mkdir(join_path(folder_path, catagory))
-                    move_files(folder_path, join_path(folder_path, catagory), files)
+                    target_folder.mkdir(exist_ok=False)
+                    move_files(folder_path, target_folder, files)
                 except FileExistsError:
                     print(f"{catagory} folder already exists")
-                    move_files(folder_path, join_path(folder_path, catagory), files)
+                    move_files(folder_path, target_folder, files)
 
         print(f"{catagory}: {len(files)}")
 

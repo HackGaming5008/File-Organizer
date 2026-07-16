@@ -17,6 +17,7 @@ class MainWindow(QWidget):
         self.setWindowTitle("File Organizer")
         self.resize(1200, 760)
         self.setMinimumSize(800, 560)
+        self.setAcceptDrops(True)
 
         main_layout = QHBoxLayout(self)        
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -46,6 +47,27 @@ class MainWindow(QWidget):
         main_layout.addWidget(self.folder_lable)
         main_layout.addWidget(self.sel_folder)
         main_layout.addWidget(run_btn)
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+    
+    def dropEvent(self, event):
+        """Triggered when the object is dropped."""
+        # Loop through the dropped URLs (in case multiple are dropped)
+        for url in event.mimeData().urls():
+            # Convert the QUrl to a local file system path string
+            self.path = Path(url.toLocalFile())
+            
+            # Verify if the path is actually a directory/folder
+            if self.path.is_dir():
+                self.folder_lable.setText(str(self.path))
+                print(f"Successfully grabbed folder path: {self.path}")
+            else:
+                self.folder_lable.setText("That was a file, not a folder! Try again.")
+                print(f"Dropped item is a file, ignored: {self.path}")
 
     def orgonize_files(self):
         functionMain(self.path)
