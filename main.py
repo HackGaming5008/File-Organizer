@@ -21,7 +21,6 @@ docx_ext = [".docx", ".doc", ".xlsx", ".pptx"]
 
 # Modes
 delete_empty_folders = False
-move_enabled = True
 
 #################### FUNCTIONS ###################
 
@@ -87,15 +86,14 @@ def functionMain(folder_path):
 
 
     for catagory, (files, extensions) in catagories.items():
-        if move_enabled:
-            if files:
-                target_folder = folder_path / catagory
-                try:
-                    target_folder.mkdir(exist_ok=False)
-                    move_files(folder_path, target_folder, files)
-                except FileExistsError:
-                    print(f"{catagory} folder already exists")
-                    move_files(folder_path, target_folder, files)
+        if files:
+            target_folder = folder_path / catagory
+            try:
+                target_folder.mkdir(exist_ok=False)
+                move_files(folder_path, target_folder, files)
+            except FileExistsError:
+                print(f"{catagory} folder already exists")
+                move_files(folder_path, target_folder, files)
 
         print(f"{catagory}: {len(files)}")
 

@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (
     QApplication, QPushButton, QLabel, QHBoxLayout, QWidget, 
-    QFileDialog, QVBoxLayout, QCheckBox
+    QFileDialog, QVBoxLayout, QCheckBox, QFrame
     )
 from PyQt6.QtCore import Qt
 
@@ -33,6 +33,16 @@ FOLDER_LABEL_STYLE_SELECTED = """
                     font: 15px;
                     """
 
+PANEL_LABEL = "margin:0px 0px 12px 0px"
+
+CATAGORIES_CHECK_STYLE = """
+QCheckBox{
+
+font: 14px bold;
+
+}
+"""
+
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -49,10 +59,14 @@ class MainWindow(QWidget):
 
     def setup_ui(self):
 
-        folder_drop_layout = QHBoxLayout()
-        checkBox_layout = QHBoxLayout()
-        bottom_layout = QHBoxLayout()
+        # TOP LAYOUT
 
+        top_frame = QFrame()
+        top_frame.setFrameShape(QFrame.Shape.NoFrame)
+        top_frame.setStyleSheet("padding: 0px; margin:0px")
+
+        top_layout = QHBoxLayout(top_frame)
+        
         self.folder_lable = QLabel("No folder selected")
         self.folder_lable.setStyleSheet(FOLDER_LABEL_STYLE_DEFAULT)
         if self.path:
@@ -62,14 +76,62 @@ class MainWindow(QWidget):
         self.sel_folder.clicked.connect(self.selectFolder)
         self.sel_folder.setStyleSheet("height: 30px; max-width: 120px; font:15px; padding: 2px 8px; margin:0px 10px 0px 0px;")
 
-        folder_drop_layout.addStretch()
-        folder_drop_layout.addWidget(self.folder_lable)
-        folder_drop_layout.addWidget(self.sel_folder)
-        folder_drop_layout.addStretch()
+        top_layout.addWidget(self.folder_lable)
+        top_layout.addWidget(self.sel_folder)
 
 
-        moveEnabled_checkBox = QCheckBox("Enable Moving files")
-        checkBox_layout.addWidget(moveEnabled_checkBox, alignment=Qt.AlignmentFlag.AlignLeft)
+        # MIDDLE LAYOUT
+
+            # panel 1 - options 
+
+        panel1 = QFrame()
+        panel1.setFrameShape(QFrame.Shape.StyledPanel)
+        panel1.setFrameShadow(QFrame.Shadow.Plain)
+
+        options_layout = QVBoxLayout(panel1)
+
+        options_label= QLabel("Options")
+        options_label.setStyleSheet(PANEL_LABEL)
+        options_layout.addWidget(options_label, alignment=Qt.AlignmentFlag.AlignTop)
+
+        self.deleteEmpty = QCheckBox("Delete empty folder")
+        
+        categories_check = QCheckBox("Sort Categories")
+        categories_check.setStyleSheet(CATAGORIES_CHECK_STYLE)
+
+        catego_ui = self.categories_ui()
+
+        options_layout.addWidget(self.deleteEmpty, alignment=Qt.AlignmentFlag.AlignLeft)
+        options_layout.addWidget(categories_check, alignment=Qt.AlignmentFlag.AlignLeft)
+        options_layout.addWidget(catego_ui, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        categories_check.toggled.connect(catego_ui.setVisible)
+
+        options_layout.addStretch()
+
+
+        # panel 2 - preview
+
+        panel2 = QFrame()
+        panel2.setFrameShape(QFrame.Shape.StyledPanel)
+        panel2.setFrameShadow(QFrame.Shadow.Plain)
+        panel2.setStyleSheet("background-color:#121212; border-radius:5px;")
+        preview_layout = QVBoxLayout(panel2)
+
+        preview_label = QLabel("Preview")
+        preview_label.setStyleSheet(PANEL_LABEL)
+
+
+        preview_layout.addWidget(preview_label, alignment=Qt.AlignmentFlag.AlignTop)
+
+        middle_layout = QHBoxLayout()
+        middle_layout.addWidget(panel1,1)
+        middle_layout.addWidget(panel2,2)
+
+
+        #BOTTOM LAYOUT
+
+        bottom_layout = QHBoxLayout()
 
         run_btn = QPushButton("Orgonize Files")
         run_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -79,11 +141,25 @@ class MainWindow(QWidget):
         bottom_layout.addWidget(run_btn, alignment=Qt.AlignmentFlag.AlignRight)
 
         main_layout = QVBoxLayout(self)
-        main_layout.addLayout(folder_drop_layout)
-        main_layout.addStretch(1)
-        main_layout.addLayout(checkBox_layout)
-        main_layout.addStretch(8)
-        main_layout.addLayout(bottom_layout)
+        main_layout.addWidget(top_frame)
+        main_layout.addLayout(middle_layout,2)
+        main_layout.addLayout(bottom_layout,1)
+
+    def categories_ui(self):
+
+        categories_frame = QFrame()
+        categories_layout = QVBoxLayout(categories_frame)
+        self.images = QCheckBox("Images")
+        self.pdfs = QCheckBox("PDFs")
+        self.documents = QCheckBox("Documents")
+        categories_layout.addWidget(self.images)
+        categories_layout.addWidget(self.pdfs)
+        categories_layout.addWidget(self.documents)
+        categories_frame.setVisible(False)
+        return categories_frame
+    
+    # def preview_ui():
+
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
