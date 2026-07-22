@@ -5,7 +5,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 
 import sys
-from main import functionMain
+from main import Orgonaizer
+import main
 from pathlib import Path
 
 FOLDER_LABEL_STYLE_DEFAULT = """
@@ -55,6 +56,8 @@ class MainWindow(QWidget):
         self.setMinimumSize(650, 560)
         self.setAcceptDrops(True)
         self.setup_ui()
+
+        self.orgonizer = Orgonaizer()
 
 
     def setup_ui(self):
@@ -121,8 +124,13 @@ class MainWindow(QWidget):
         preview_label = QLabel("Preview")
         preview_label.setStyleSheet(PANEL_LABEL)
 
+        self.preview_content = QLabel("No results")
+        self.preview_content.setStyleSheet("font:14px;")
+
 
         preview_layout.addWidget(preview_label, alignment=Qt.AlignmentFlag.AlignTop)
+        preview_layout.addWidget(self.preview_content, alignment=Qt.AlignmentFlag.AlignLeft)
+        preview_layout.addStretch()
 
         middle_layout = QHBoxLayout()
         middle_layout.addWidget(panel1,1)
@@ -188,7 +196,9 @@ class MainWindow(QWidget):
                 print(f"Dropped item is a file, ignored: {self.path}")
 
     def orgonize_files(self):
-        functionMain(self.path)
+        result = self.orgonizer.scanFolder(self.path)
+        self.preview_content.setText(result)
+        
     
     def selectFolder(self):
         folder = QFileDialog.getExistingDirectory(self, "Select Directory")
