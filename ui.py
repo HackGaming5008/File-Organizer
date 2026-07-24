@@ -38,9 +38,27 @@ PANEL_LABEL = "margin:0px 0px 12px 0px"
 
 CATAGORIES_CHECK_STYLE = """
 QCheckBox{
+    font: 14px bold;
+}
+"""
 
-font: 14px bold;
-
+YESNOBTN_STYLE = """
+QPushButton{
+    height: 30px;
+    max-width: 120px; 
+    font:15px; 
+    padding: 2px 8px; 
+    margin:0px 10px 0px 0px;
+    border: 1px solid #474747;
+    background: #1f1f1f;
+}
+QPushButton:hover{
+    border: 1px solid #3d2b2b;
+    background:#291d1d;
+}
+QPushButton:pressed{
+    border: 1px solid #4a2828;
+    background: #361d1d;
 }
 """
 
@@ -99,16 +117,16 @@ class MainWindow(QWidget):
 
         self.deleteEmpty = QCheckBox("Delete empty folder")
         
-        categories_check = QCheckBox("Sort Categories")
-        categories_check.setStyleSheet(CATAGORIES_CHECK_STYLE)
+        # categories_check = QCheckBox("Sort Categories")
+        # categories_check.setStyleSheet(CATAGORIES_CHECK_STYLE)
 
-        catego_ui = self.categories_ui()
+        # catego_ui = self.categories_ui()
 
         options_layout.addWidget(self.deleteEmpty, alignment=Qt.AlignmentFlag.AlignLeft)
-        options_layout.addWidget(categories_check, alignment=Qt.AlignmentFlag.AlignLeft)
-        options_layout.addWidget(catego_ui, alignment=Qt.AlignmentFlag.AlignLeft)
+        # options_layout.addWidget(categories_check, alignment=Qt.AlignmentFlag.AlignLeft)
+        # options_layout.addWidget(catego_ui, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        categories_check.toggled.connect(catego_ui.setVisible)
+        # categories_check.toggled.connect(catego_ui.setVisible)
 
         options_layout.addStretch()
 
@@ -125,12 +143,15 @@ class MainWindow(QWidget):
         preview_label.setStyleSheet(PANEL_LABEL)
 
         self.preview_content = QLabel("No results")
-        self.preview_content.setStyleSheet("font:14px;")
+        self.preview_content.setStyleSheet("font:14px; margin:0 0 0 10px")
 
 
         preview_layout.addWidget(preview_label, alignment=Qt.AlignmentFlag.AlignTop)
         preview_layout.addWidget(self.preview_content, alignment=Qt.AlignmentFlag.AlignLeft)
         preview_layout.addStretch()
+
+        self.confirm_ui = self.confirmation_ui()
+        preview_layout.addWidget(self.confirm_ui)
 
         middle_layout = QHBoxLayout()
         middle_layout.addWidget(panel1,1)
@@ -143,7 +164,7 @@ class MainWindow(QWidget):
 
         run_btn = QPushButton("Orgonize Files")
         run_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        run_btn.clicked.connect(self.orgonize_files)
+        run_btn.clicked.connect(self.runProgram)
         run_btn.setStyleSheet("height: 30px; max-width: 120px; font:15px; padding: 2px 8px; margin:0px 10px 5px 0px;")
         
         bottom_layout.addWidget(run_btn, alignment=Qt.AlignmentFlag.AlignRight)
@@ -165,8 +186,49 @@ class MainWindow(QWidget):
         categories_layout.addWidget(self.documents)
         categories_frame.setVisible(False)
         return categories_frame
+
+    def confirmation_ui(self):
+        confirm_frame = QFrame()
+        confirm_layout = QHBoxLayout(confirm_frame)
+        self.yesBtn = QPushButton("Yes")
+        self.yesBtn.setStyleSheet(YESNOBTN_STYLE)
+        self.yesBtn.clicked.connect(self.organize_files)
+        self.noBtn = QPushButton("No")
+        self.noBtn.setStyleSheet(YESNOBTN_STYLE)
+        self.noBtn.clicked.connect(self.denied_organization)
+        confirm_layout.addWidget(self.yesBtn)
+        confirm_layout.addWidget(self.noBtn)
+        confirm_frame.setVisible(False)
+        return confirm_frame
+
+    def runProgram(self):
+        result = self.orgonizer.scanFolder(self.path)
+        
+        if self.orgonizer.total != 0:
+            self.preview_content.setText(result+"\n\nDo you want to move the files?")
+            self.confirm_ui.setVisible(True)
+        else:
+            self.preview_content.setText(result)
+            self.confirm_ui.setVisible(False)
+
+    def organize_files(self):
+        result = self.orgonizer.orgonaizeFolder(self.path)
+        self.preview_content.setText(result)
+        self.confirm_ui.setVisible(False)
+
+    def denied_organization(self):
+        self.confirm_ui.setVisible(False)
+
     
-    # def preview_ui():
+    def selectFolder(self):
+        folder = QFileDialog.getExistingDirectory(self, "Select Directory")
+        
+        if folder:
+            self.path = Path(folder)
+            self.folder_lable.setText(str(self.path))
+            self.folder_lable.setStyleSheet(FOLDER_LABEL_STYLE_SELECTED)
+        else:
+            self.folder_lable.setText(str(self.path))
 
 
     def dragEnterEvent(self, event):
@@ -194,21 +256,6 @@ class MainWindow(QWidget):
             else:
                 self.folder_lable.setText("That was a file, not a folder! Try again.")
                 print(f"Dropped item is a file, ignored: {self.path}")
-
-    def orgonize_files(self):
-        result = self.orgonizer.scanFolder(self.path)
-        self.preview_content.setText(result)
-        
-    
-    def selectFolder(self):
-        folder = QFileDialog.getExistingDirectory(self, "Select Directory")
-        
-        if folder:
-            self.path = Path(folder)
-            self.folder_lable.setText(str(self.path))
-            self.folder_lable.setStyleSheet(FOLDER_LABEL_STYLE_SELECTED)
-        else:
-            self.folder_lable.setText(str(self.path))
 
 
 if __name__ == "__main__":

@@ -63,6 +63,7 @@ class Orgonaizer():
         self.delete_empty_folders = False
 
     def scanFolder(self, folder_path):
+        self.results.clear()
         for entry in folder_path.iterdir():
             if entry.is_file():
 
@@ -83,8 +84,8 @@ class Orgonaizer():
             if files:
                 self.results.append(f"{catagory}: {len(files)}")
 
-        total = sum(len(files) for files, _ in self.catagories.values())
-        self.results.append(f"Total: {total}")
+        self.total = sum(len(files) for files, _ in self.catagories.values())
+        self.results.append(f"\nTotal: {self.total}")
 
         return "\n".join(self.results)
 
@@ -97,15 +98,21 @@ class Orgonaizer():
                 if is_empty:
                     delete_empty_folder(folder)
 
-        for catagory, (files, extensions) in self.catagories.items():
-            if files:
-                target_folder = folder_path / catagory
-                try:
-                    target_folder.mkdir(exist_ok=False)
-                    move_files(folder_path, target_folder, files)
-                except FileExistsError:
-                    print(f"{catagory} folder already exists")
-                    move_files(folder_path, target_folder, files)
+        if self.total != 0:
+            for catagory, (files, extensions) in self.catagories.items():
+                if files:
+                    target_folder = folder_path / catagory
+                    try:
+                        target_folder.mkdir(exist_ok=False)
+                        move_files(folder_path, target_folder, files)
+                    except FileExistsError:
+                        print(f"{catagory} folder already exists")
+                        move_files(folder_path, target_folder, files)
 
-        return "\n".join("Successful!!")
+            self.results.append("\nSuccessfully moved!!")
+
+            return "\n".join(self.results)
+        else:
+            self.results.pop()
+            return "\n".join(self.results)
 
