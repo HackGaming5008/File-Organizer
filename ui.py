@@ -5,8 +5,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 
 import sys
-from main import Orgonaizer
-import main
+from core import Orgonaizer
 from pathlib import Path
 
 FOLDER_LABEL_STYLE_DEFAULT = """
@@ -72,10 +71,11 @@ class MainWindow(QWidget):
         self.setWindowTitle("File Organizer")
         # self.resize(1200, 760)
         self.setMinimumSize(650, 560)
+        self.orgonizer = Orgonaizer()
+
         self.setAcceptDrops(True)
         self.setup_ui()
 
-        self.orgonizer = Orgonaizer()
 
 
     def setup_ui(self):
@@ -112,10 +112,11 @@ class MainWindow(QWidget):
         options_layout = QVBoxLayout(panel1)
 
         options_label= QLabel("Options")
-        options_label.setStyleSheet(PANEL_LABEL)
+        options_label.setStyleSheet(PANEL_LABEL) 
         options_layout.addWidget(options_label, alignment=Qt.AlignmentFlag.AlignTop)
 
-        self.deleteEmpty = QCheckBox("Delete empty folder")
+        self.deleteEmpty = QCheckBox("Scan for empty folder")
+        self.deleteEmpty.toggled.connect(self.toggleEmptyFolders)
         
         # categories_check = QCheckBox("Sort Categories")
         # categories_check.setStyleSheet(CATAGORIES_CHECK_STYLE)
@@ -144,10 +145,13 @@ class MainWindow(QWidget):
 
         self.preview_content = QLabel("No results")
         self.preview_content.setStyleSheet("font:14px; margin:0 0 0 10px")
+        self.preview_status = QLabel("")
+        self.preview_status.setStyleSheet("font:14px; margin:0 0 0 10px")
 
 
         preview_layout.addWidget(preview_label, alignment=Qt.AlignmentFlag.AlignTop)
         preview_layout.addWidget(self.preview_content, alignment=Qt.AlignmentFlag.AlignLeft)
+        preview_layout.addWidget(self.preview_status, alignment=Qt.AlignmentFlag.AlignLeft)
         preview_layout.addStretch()
 
         self.confirm_ui = self.confirmation_ui()
@@ -162,9 +166,9 @@ class MainWindow(QWidget):
 
         bottom_layout = QHBoxLayout()
 
-        run_btn = QPushButton("Orgonize Files")
+        run_btn = QPushButton("Scan Folder")
         run_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        run_btn.clicked.connect(self.runProgram)
+        run_btn.clicked.connect(self.startScan)
         run_btn.setStyleSheet("height: 30px; max-width: 120px; font:15px; padding: 2px 8px; margin:0px 10px 5px 0px;")
         
         bottom_layout.addWidget(run_btn, alignment=Qt.AlignmentFlag.AlignRight)
@@ -201,34 +205,46 @@ class MainWindow(QWidget):
         confirm_frame.setVisible(False)
         return confirm_frame
 
-    def runProgram(self):
-        result = self.orgonizer.scanFolder(self.path)
-        
-        if self.orgonizer.total != 0:
-            self.preview_content.setText(result+"\n\nDo you want to move the files?")
-            self.confirm_ui.setVisible(True)
-        else:
-            self.preview_content.setText(result)
-            self.confirm_ui.setVisible(False)
+    def startScan(self):
+        if self.path != None:
+            result = self.orgonizer.scanFolder(self.path)
+            
+            if self.orgonizer.total != 0:
+                self.preview_content.setText(result)
+                self.preview_status.setText("Do you want to move the files?")
+                self.confirm_ui.setVisible(True)
+            else:
+                self.preview_content.setText(result)
+                self.confirm_ui.setVisible(False)
 
     def organize_files(self):
-        result = self.orgonizer.orgonaizeFolder(self.path)
+        self.orgonizer.orgonaizeFolder(self.path)
+        result = self.orgonizer.scanFolder(self.path)
         self.preview_content.setText(result)
+        self.preview_status.setText("Oparation Successful!!")
         self.confirm_ui.setVisible(False)
 
     def denied_organization(self):
         self.confirm_ui.setVisible(False)
+        self.preview_status.setText("")
 
     
     def selectFolder(self):
         folder = QFileDialog.getExistingDirectory(self, "Select Directory")
         
         if folder:
+            self.preview_content.setText("No results")
+            self.orgonizer.clearChaches()
+            self.preview_status.setText("")
+
             self.path = Path(folder)
             self.folder_lable.setText(str(self.path))
             self.folder_lable.setStyleSheet(FOLDER_LABEL_STYLE_SELECTED)
         else:
             self.folder_lable.setText(str(self.path))
+
+    def toggleEmptyFolders(self, state):
+        self.orgonizer.delete_empty_folders = state
 
 
     def dragEnterEvent(self, event):
@@ -250,6 +266,10 @@ class MainWindow(QWidget):
             
             # Verify if the path is actually a directory/folder
             if self.path.is_dir():
+                self.preview_content.setText("No results")
+                self.preview_status.setText("")
+                self.orgonizer.clearChaches()
+
                 self.folder_lable.setText(str(self.path))
                 self.folder_lable.setStyleSheet(FOLDER_LABEL_STYLE_SELECTED)
                 print(f"Successfully grabbed folder path: {self.path}")
