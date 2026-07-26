@@ -1,0 +1,17 @@
+# Ignore specific files
+TODO.md
+Folder Organizer.spec
+
+# Ignore an entire folder (e.g., virtual environments or cache)
+.venv/
+__pycache__/
+dist/
+build/
+Test/
+
+# Ignore all files with a specific extension
+*.log
+*.pyc
+
+# Ignore files matching a pattern inside any subdirectory
+**/*.tmp
